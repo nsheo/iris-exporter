@@ -165,7 +165,7 @@ func (c *Collector) GetMPSMaster() {
 			if(label[1] == "OK") {
 			    targetMetric = 1
 			}
-			fmt.Println("GetMPSMaster Check Data : " + label[1] + ", " + targetMetric)
+			fmt.Println("GetMPSMaster Check Data : " + label[1])
 			c.mpsStatus.WithLabelValues(label[0], label[1], label[2], label[3], 
 			                          label[4], label[5], label[6], label[7], 
 									  label[8], label[9], label[10]).Set(targetMetric)
