@@ -45,7 +45,7 @@ func (c *Collector) scrapeHandler(w http.ResponseWriter, r *http.Request) {
     c.mpsStatus.Reset();
 	c.ntopStatus.Reset();
 	c.GetMPSMaster();
-	//c.GetMPSSub();
+	c.GetMPSSub();
 	c.GetNodeStatus();
 	promhttp.HandlerFor(
 		c.options.Registry, promhttp.HandlerOpts{ErrorHandling: promhttp.ContinueOnError},
@@ -283,7 +283,7 @@ func (c *Collector) GetNodeStatus() {
 
 func (c *Collector) Execute(commandType string) ([]byte, error) {
 	var resValue bytes.Buffer
-	
+	fmt.Println("Check Command: " + commandType)
 	if(commandType == "mps-master") {
 	    if err := pipe.Command(&resValue,
         	exec.Command(c.DerefString(irisBinPath) + "mps"),
