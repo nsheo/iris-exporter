@@ -45,7 +45,7 @@ func (c *Collector) scrapeHandler(w http.ResponseWriter, r *http.Request) {
     c.mpsStatus.Reset();
 	c.ntopStatus.Reset();
 	c.GetMPSMaster();
-	c.GetMPSSub();
+	//c.GetMPSSub();
 	c.GetNodeStatus();
 	promhttp.HandlerFor(
 		c.options.Registry, promhttp.HandlerOpts{ErrorHandling: promhttp.ContinueOnError},
