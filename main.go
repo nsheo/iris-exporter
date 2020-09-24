@@ -19,7 +19,7 @@ import (
 var (
     masterIP = flag.String("masterIP", "192.168.0.1", "Iris Master LocalIP run this exporter");
     irisBinPath = flag.String("irisBinPath", "/home/iris/IRIS/bin/", "Iris Command Binary Path");
-	sedfile = flag.String("sedfile", "sedcommand.file", "Complicated sed command");
+	//sedfile = flag.String("sedfile", "sedcommand.file", "Complicated sed command");
 	mpsLabelStr = []string{"node_ip","role","abn","mid","name","desc","mode","pid","cmd","sta","uptime"}
 	ntopLabelStr = []string{"node_num","sys_status","adm_status","update_time","node_ip","cpu","loadavg","memp","memf","disk"}
 )
@@ -294,7 +294,7 @@ func (c *Collector) Execute(commandType string) ([]byte, error) {
     } else if(commandType == "mps-sub") {
 	    if err := pipe.Command(&resValue,
         	exec.Command(c.DerefString(irisBinPath) + "cmd", "mps"),
-        	exec.Command("sed", "-f", c.DerefString(sedfile)),
+        	exec.Command("sed", "-e", "/</d;/--/d;/ABN   MID    NAME         DESC                      GROUP       MODE    PID    CMD    STA         TIME/d"),
         ); err != nil {
         	return nil, err
         }
