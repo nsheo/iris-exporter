@@ -134,7 +134,7 @@ func (c *Collector) MpsMasterParser(result []byte) [][]string {
 		if len(line) == 0 {
 			continue
 		}
-		fmt.Println("MpsMasterParser Check Data : " + line)
+		//fmt.Println("MpsMasterParser Check Data : " + line)
 		bufferStr := strings.Split(line, "|")
 		label := []string{c.DerefString(masterIP), 
 		                  strings.TrimSpace(bufferStr[0]), 
@@ -165,7 +165,7 @@ func (c *Collector) GetMPSMaster() {
 			if(label[1] == "OK") {
 			    targetMetric = 1
 			}
-			fmt.Println("GetMPSMaster Check Data : " + label[1])
+			//fmt.Println("GetMPSMaster Check Data : " + label[1])
 			c.mpsStatus.WithLabelValues(label[0], label[1], label[2], label[3], 
 			                          label[4], label[5], label[6], label[7], 
 									  label[8], label[9], label[10]).Set(targetMetric)
@@ -178,13 +178,13 @@ func (c *Collector) MpsSubParser(result []byte) [][]string {
 		labels [][]string
 		subIP string
     )
-    fmt.Println("MpsSubParser Check Data 1 : " + string(result))
+    //fmt.Println("MpsSubParser Check Data 1 : " + string(result))
 	for _, line := range strings.Split(string(result), "\n") {	
 		if len(line) == 0 {
 			continue
 		}
 		
-		fmt.Println("MpsSubParser Check Data 2 : " + line)
+		//fmt.Println("MpsSubParser Check Data 2 : " + line)
 		
 		if len(line) < 16 {
 		    subIP = strings.TrimSpace(line)
@@ -268,7 +268,7 @@ func (c *Collector) GetNodeStatus() {
 	    for _, label := range labels { 
 			var targetMetric float64 = 0 
 			
-			if(label[1] == "VAILD") {
+			if(label[1] == "VALID") {
 			    targetMetric = 1
 			} else if(label[1] == "WAIT_RETRY") {
 			    targetMetric = -1
@@ -283,7 +283,7 @@ func (c *Collector) GetNodeStatus() {
 
 func (c *Collector) Execute(commandType string) ([]byte, error) {
 	var resValue bytes.Buffer
-	fmt.Println("Check Command: " + commandType)
+	//fmt.Println("Check Command: " + commandType)
 	if(commandType == "mps-master") {
 	    if err := pipe.Command(&resValue,
         	exec.Command(c.DerefString(irisBinPath) + "mps"),
