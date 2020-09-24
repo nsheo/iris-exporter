@@ -19,8 +19,8 @@ import (
 var (
     masterIP = flag.String("masterIP", "192.168.0.1", "Iris Master LocalIP run this exporter");
     irisBinPath = flag.String("irisBinPath", "/home/iris/IRIS/bin/", "Iris Command Binary Path");
-	sedfile = flag.String("dateformat", "sedcommand.file", "Complicated sed command");
-	mpsLabelStr = []string{"role","abn","mid","name","desc","mode","pid","cmd","sta","uptime"}
+	sedfile = flag.String("sedfile", "sedcommand.file", "Complicated sed command");
+	mpsLabelStr = []string{"node_ip","role","abn","mid","name","desc","mode","pid","cmd","sta","uptime"}
 	ntopLabelStr = []string{"node_num","sys_status","adm_status","update_time","node_ip","cpu","loadavg","memp","memf","disk"}
 )
 

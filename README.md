@@ -26,6 +26,6 @@ systemctl start iris-exporter.service
 
 3. Parameter for iris-exporter   
 ```
-./iris-exporter -masterIP=<localip of run this exporter(0.0.0.0)> -listen=<metrics http port(default:9102) -irisBinPath=<iris uitl binary path(default:$M6_HOME/bin)> -sedfile=<sed filter file to filter subnode mps (default:sedcommand.file)> 
+./iris-exporter -masterIP=<localip of run this exporter(0.0.0.0)> -listen=<metrics http port(default::9102) -irisBinPath=<iris uitl binary path(default:$M6_HOME/bin/)> -sedfile=<sed filter file to filter subnode mps (default:sedcommand.file)> 
 ```
 
