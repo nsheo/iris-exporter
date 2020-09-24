@@ -134,7 +134,7 @@ func (c *Collector) MpsMasterParser(result []byte) [][]string {
 		if len(line) == 0 {
 			continue
 		}
-		
+		fmt.Println("MpsMasterParser Check Data : " + line)
 		bufferStr := strings.SplitN(line, "|", -1)
 		label := []string{c.DerefString(masterIP), 
 		                  strings.TrimSpace(bufferStr[0]), 
@@ -183,6 +183,8 @@ func (c *Collector) MpsSubParser(result []byte) [][]string {
 		if len(line) == 0 {
 			continue
 		}
+		
+		fmt.Println("MpsSubParser Check Data : " + line)
 		
 		if len(line) < 16 {
 		    subIP = strings.TrimSpace(line)
@@ -237,6 +239,8 @@ func (c *Collector) NodeStatusParser(result []byte) [][]string {
 		if len(line) == 0 {
 			continue
 		}
+		
+		fmt.Println("NodeStatusParser Check Data : " + line)
 		
 		bufferStr := strings.SplitN(line, ",", 0)
 		label := []string{strings.TrimSpace(strings.Replace(bufferStr[0], "NODE:", "", 1)), 
