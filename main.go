@@ -240,7 +240,7 @@ func (c *Collector) NodeStatusParser(result []byte) [][]string {
 			continue
 		}
 		
-		fmt.Println("NodeStatusParser Check Data : " + line)
+		//fmt.Println("NodeStatusParser Check Data : " + line)
 		
 		bufferStr := strings.Split(line, ",")
 		label := []string{strings.TrimSpace(strings.Replace(bufferStr[0], "NODE:", "", 1)), 
