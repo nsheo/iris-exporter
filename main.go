@@ -178,13 +178,13 @@ func (c *Collector) MpsSubParser(result []byte) [][]string {
 		labels [][]string
 		subIP string
     )
-
+    fmt.Println("MpsSubParser Check Data 1 : " + string(result))
 	for _, line := range strings.Split(string(result), "\n") {	
 		if len(line) == 0 {
 			continue
 		}
 		
-		fmt.Println("MpsSubParser Check Data : " + line)
+		fmt.Println("MpsSubParser Check Data 2 : " + line)
 		
 		if len(line) < 16 {
 		    subIP = strings.TrimSpace(line)
@@ -300,7 +300,7 @@ func (c *Collector) Execute(commandType string) ([]byte, error) {
         }
     } else {
         if err := pipe.Command(&resValue,
-        	exec.Command(c.DerefString(irisBinPath) + "ntop"),
+        	exec.Command(c.DerefString(irisBinPath) + "Admin/NodeList"),
         	exec.Command("sed", "-n", "/NODE:/p"),
         ); err != nil {
         	return nil, err
