@@ -55,12 +55,18 @@ type Options struct {
 func (c *Collector) scrapeHandler(w http.ResponseWriter, r *http.Request) {
     c.mpsStatus.Reset();
 	c.ntopStatus.Reset();
+	c.ntopCpu.Reset();
+	c.ntopLoadAvg.Reset();
+	c.ntopMemp.Reset();
+	c.ntopMemf.Reset();
+	c.ntopDisk.Reset();
 	c.GetMPSMaster();
 	c.GetMPSSub();
 	c.GetNodeStatus();
 	promhttp.HandlerFor(
 		c.options.Registry, promhttp.HandlerOpts{ErrorHandling: promhttp.ContinueOnError},
 	).ServeHTTP(w, r)
+	
 }
 
 
@@ -361,46 +367,46 @@ func (c *Collector) GetNodeStatus() {
 			cpuVal, err := strconv.ParseFloat(label[5], 64)
 			if err != nil {
 			    c.ntopCpu.WithLabelValues(label[0], label[1], label[2], label[3], 
-			                           label[4]).Set(cpuVal)
+			                           label[4]).Set(0)
 			} else {
 			    c.ntopCpu.WithLabelValues(label[0], label[1], label[2], label[3], 
-			                           label[4]).Set(0)
+			                           label[4]).Set(cpuVal)
 			}
 			
 			loadVal, err := strconv.ParseFloat(label[6], 64)
 			if err != nil {
 			    c.ntopLoadAvg.WithLabelValues(label[0], label[1], label[2], label[3], 
-			                           label[4]).Set(loadVal)
+			                           label[4]).Set(0)
 			} else {
 			    c.ntopLoadAvg.WithLabelValues(label[0], label[1], label[2], label[3], 
-			                           label[4]).Set(0)
+			                           label[4]).Set(loadVal)
 			}			
 
 			mempVal, err := strconv.ParseFloat(label[7], 64)
 			if err != nil {
 			    c.ntopMemp.WithLabelValues(label[0], label[1], label[2], label[3], 
-			                           label[4]).Set(mempVal)
+			                           label[4]).Set(0)
 			} else {
 			    c.ntopMemp.WithLabelValues(label[0], label[1], label[2], label[3], 
-			                           label[4]).Set(0)
+			                           label[4]).Set(mempVal)
 			}
 
 			memfVal, err := strconv.ParseFloat(label[8], 64)
 			if err != nil {
 			    c.ntopMemf.WithLabelValues(label[0], label[1], label[2], label[3], 
-			                           label[4]).Set(memfVal)
+			                           label[4]).Set(0)
 			} else {
 			    c.ntopMemf.WithLabelValues(label[0], label[1], label[2], label[3], 
-			                           label[4]).Set(0)
+			                           label[4]).Set(memfVal)
 			}
 
 			diskVal, err := strconv.ParseFloat(label[9], 64)
 			if err != nil {
 			    c.ntopDisk.WithLabelValues(label[0], label[1], label[2], label[3], 
-			                           label[4]).Set(diskVal)
+			                           label[4]).Set(0)
 			} else {
 			    c.ntopDisk.WithLabelValues(label[0], label[1], label[2], label[3], 
-			                           label[4]).Set(0)
+			                           label[4]).Set(diskVal)
 			}
 		}
     }
