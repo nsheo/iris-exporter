@@ -5,6 +5,7 @@ import (
     "os/exec"
 	"flag"
 	"bytes"
+	"strconv"
 	"os"
 	"sync"
 	"io/ioutil"
@@ -21,7 +22,7 @@ var (
     irisBinPath = flag.String("irisBinPath", "/home/iris/IRIS/bin/", "Iris Command Binary Path");
 	//sedfile = flag.String("sedfile", "sedcommand.file", "Complicated sed command");
 	mpsLabelStr = []string{"node_ip","role","abn","mid","name","desc","mode","pid","cmd","sta","uptime"}
-	ntopLabelStr = []string{"node_num","sys_status","adm_status","update_time","node_ip","cpu","loadavg","memp","memf","disk"}
+	ntopLabelStr = []string{"node_num","sys_status","adm_status","update_time","node_ip"}
 )
 
 
@@ -30,9 +31,19 @@ type Collector struct {
     mux                       *http.ServeMux                      
     mpsStatus                 *prometheus.GaugeVec
 	ntopStatus                *prometheus.GaugeVec
+	ntopCpu                   *prometheus.GaugeVec
+	ntopLoadAvg               *prometheus.GaugeVec
+	ntopMemp                  *prometheus.GaugeVec
+	ntopMemf                  *prometheus.GaugeVec
+	ntopDisk                  *prometheus.GaugeVec
 	targetScrapeRequestErrors prometheus.Counter
 	mpsDesc                   *prometheus.Desc
-	ntopDesc                  *prometheus.Desc
+	ntopStatusDesc            *prometheus.Desc
+	ntopCpuDesc               *prometheus.Desc
+	ntopLoadAvgDesc           *prometheus.Desc
+	ntopMempDesc              *prometheus.Desc
+	ntopMemfDesc              *prometheus.Desc
+	ntopDiskDesc              *prometheus.Desc
 	Registry                  *prometheus.Registry
 	options                   Options
 }
@@ -44,6 +55,11 @@ type Options struct {
 func (c *Collector) scrapeHandler(w http.ResponseWriter, r *http.Request) {
     c.mpsStatus.Reset();
 	c.ntopStatus.Reset();
+    c.ntopCpu.Reset();
+	c.ntopLoadAvg.Reset();
+	c.ntopMemp.Reset();
+	c.ntopMemf.Reset();
+	c.ntopDisk.Reset();
 	c.GetMPSMaster();
 	c.GetMPSSub();
 	c.GetNodeStatus();
@@ -76,11 +92,41 @@ func NewIrisMetricExporter(opts Options) (*Collector, error) {
 				Help: "iris Process Status",
 	}, mpsLabelStr)
 	
-    c.ntopDesc = prometheus.NewDesc(
+    c.ntopStatusDesc = prometheus.NewDesc(
                   "iris_node_status",
                   "iris Node Status",
                   ntopLabelStr, nil,
     )
+	c.ntopCpuDesc = prometheus.NewDesc(
+                  "iris_node_cpu_usage",
+                  "iris Node CPU Usage",
+                  ntopLabelStr, nil,
+    )
+	
+	c.ntopLoadAvgDesc = prometheus.NewDesc(
+                  "iris_node_loadavg_usage",
+                  "iris Node LoadAvg Status",
+                  ntopLabelStr, nil,
+    )
+	
+	c.ntopMempDesc = prometheus.NewDesc(
+                  "iris_node_memp_usage",
+                  "iris Node MemP usage",
+                  ntopLabelStr, nil,
+    )
+	
+	c.ntopMemfDesc = prometheus.NewDesc(
+                  "iris_node_memf_usage",
+                  "iris Node MemF usage",
+                  ntopLabelStr, nil,
+    )
+	
+	c.ntopDiskDesc = prometheus.NewDesc(
+                  "iris_node_disk_usage",
+                  "iris Node Disk usage",
+                  ntopLabelStr, nil,
+    )
+
 
 	c.ntopStatus = prometheus.NewGaugeVec(
 			prometheus.GaugeOpts{
@@ -88,11 +134,46 @@ func NewIrisMetricExporter(opts Options) (*Collector, error) {
 				Help: "iris Node Status",
 	}, ntopLabelStr)
 
+    c.ntopCpu = prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Name: "iris_node_cpu_usage",
+				Help: "iris Node CPU Usage",
+	}, ntopLabelStr)
+	
+	c.ntopLoadAvg = prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Name: "iris_node_loadavg_usage",
+				Help: "iris Node LoadAvg Usage",
+	}, ntopLabelStr)
+	
+	c.ntopMemp = prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Name: "iris_node_memp_usage",
+				Help: "iris Node MemP Usage",
+	}, ntopLabelStr)
+	
+	c.ntopMemf = prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Name: "iris_node_memf_usage",
+				Help: "iris Node MemF Usage",
+	}, ntopLabelStr)
+	
+	c.ntopDisk = prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Name: "iris_node_disk_usage",
+				Help: "iris Node Disk Usage",
+	}, ntopLabelStr)
 
+	
 	if c.options.Registry != nil {
 		c.options.Registry.MustRegister(c.targetScrapeRequestErrors)
 		c.options.Registry.MustRegister(c.mpsStatus)
 		c.options.Registry.MustRegister(c.ntopStatus)
+		c.options.Registry.MustRegister(c.ntopCpu)
+		c.options.Registry.MustRegister(c.ntopLoadAvg)
+		c.options.Registry.MustRegister(c.ntopMemp)
+		c.options.Registry.MustRegister(c.ntopMemf)
+		c.options.Registry.MustRegister(c.ntopDisk)
 	}
     c.mux = http.NewServeMux()
 	c.mux.HandleFunc("/metrics", c.scrapeHandler)
@@ -111,7 +192,12 @@ func (c *Collector) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // Describe outputs NCHF metric descriptions.
 func (c *Collector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.mpsDesc
-	ch <- c.ntopDesc
+	ch <- c.ntopStatusDesc
+	ch <- c.ntopCpuDesc
+	ch <- c.ntopLoadAvgDesc
+	ch <- c.ntopMempDesc
+	ch <- c.ntopMemfDesc
+	ch <- c.ntopDiskDesc
 	ch <- c.targetScrapeRequestErrors.Desc()
 
 }
@@ -153,10 +239,13 @@ func (c *Collector) MpsMasterParser(result []byte) [][]string {
 }
 
 func (c *Collector) GetMPSMaster() {
-	result, err := c.Execute("mps-master")
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "There was an error in running iris command ", err)
-		c.targetScrapeRequestErrors.Add(1);
+    result, err := c.Execute("mps-master")
+    if err != nil {
+            fmt.Fprintln(os.Stderr, "There was an error in running iris command ", err)
+            c.targetScrapeRequestErrors.Add(1);
+    } else if strings.Contains(string(result), "EHD is not working") {
+            fmt.Fprintln(os.Stderr, "There was an error in running iris command : EHD is not working ", err)
+            c.targetScrapeRequestErrors.Add(1);   
     } else {
 	    labels := c.MpsMasterParser(result)
 	    for _, label := range labels { 
@@ -209,10 +298,13 @@ func (c *Collector) MpsSubParser(result []byte) [][]string {
 }
 
 func (c *Collector) GetMPSSub() {
-	result, err := c.Execute("mps-sub")
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "There was an error in running iris command ", err)
-		c.targetScrapeRequestErrors.Add(1);
+    result, err := c.Execute("mps-sub")
+    if err != nil {
+            fmt.Fprintln(os.Stderr, "There was an error in running iris command ", err)
+            c.targetScrapeRequestErrors.Add(1);
+    } else if strings.Contains(string(result), "EHD is not working") {
+            fmt.Fprintln(os.Stderr, "There was an error in running iris command : EHD is not working ", err)
+            c.targetScrapeRequestErrors.Add(1);            
     } else {
 	    labels := c.MpsSubParser(result)
 	    for _, label := range labels { 
@@ -275,8 +367,52 @@ func (c *Collector) GetNodeStatus() {
 			}
 			
 			c.ntopStatus.WithLabelValues(label[0], label[1], label[2], label[3], 
-			                           label[4], label[5], label[6], label[7], 
-									   label[8], label[9]).Set(targetMetric)
+			                           label[4]).Set(targetMetric)
+			
+			cpuVal, err := strconv.ParseFloat(label[5], 64)
+			if err != nil {
+			    c.ntopCpu.WithLabelValues(label[0], label[1], label[2], label[3], 
+			                           label[4]).Set(0)
+			} else {
+			    c.ntopCpu.WithLabelValues(label[0], label[1], label[2], label[3], 
+			                           label[4]).Set(cpuVal)
+			}
+			
+			loadVal, err := strconv.ParseFloat(label[6], 64)
+			if err != nil {
+			    c.ntopLoadAvg.WithLabelValues(label[0], label[1], label[2], label[3], 
+			                           label[4]).Set(0)
+			} else {
+			    c.ntopLoadAvg.WithLabelValues(label[0], label[1], label[2], label[3], 
+			                           label[4]).Set(loadVal)
+			}			
+
+			mempVal, err := strconv.ParseFloat(label[7], 64)
+			if err != nil {
+			    c.ntopMemp.WithLabelValues(label[0], label[1], label[2], label[3], 
+			                           label[4]).Set(0)
+			} else {
+			    c.ntopMemp.WithLabelValues(label[0], label[1], label[2], label[3], 
+			                           label[4]).Set(mempVal)
+			}
+
+			memfVal, err := strconv.ParseFloat(label[8], 64)
+			if err != nil {
+			    c.ntopMemf.WithLabelValues(label[0], label[1], label[2], label[3], 
+			                           label[4]).Set(0)
+			} else {
+			    c.ntopMemf.WithLabelValues(label[0], label[1], label[2], label[3], 
+			                           label[4]).Set(memfVal)
+			}
+
+			diskVal, err := strconv.ParseFloat(label[9], 64)
+			if err != nil {
+			    c.ntopDisk.WithLabelValues(label[0], label[1], label[2], label[3], 
+			                           label[4]).Set(0)
+			} else {
+			    c.ntopDisk.WithLabelValues(label[0], label[1], label[2], label[3], 
+			                           label[4]).Set(diskVal)
+			}
 		}
     }
 }
@@ -335,3 +471,4 @@ func main() {
 	
     log.Fatal(http.ListenAndServe(*listen, cltr))
 }
+
